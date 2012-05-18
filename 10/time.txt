@@ -1,0 +1,71 @@
+slow0:
+
+real	0m0.489s
+user	0m0.485s
+sys	0m0.002s
+ 
+slow1:
+
+real	0m0.080s
+user	0m0.079s
+sys	0m0.000s
+ 
+slow2:
+
+real	0m0.084s
+user	0m0.083s
+sys	0m0.000s
+ 
+slow3:
+
+real	0m0.056s
+user	0m0.056s
+sys	0m0.000s
+ 
+faster0:
+
+real	0m0.455s
+user	0m0.453s
+sys	0m0.000s
+ 
+faster1:
+
+real	0m0.081s
+user	0m0.077s
+sys	0m0.003s
+ 
+faster2:
+
+real	0m0.078s
+user	0m0.077s
+sys	0m0.000s
+ 
+faster3:
+
+real	0m0.078s
+user	0m0.076s
+sys	0m0.000s
+ 
+fastest0:
+
+real	0m0.384s
+user	0m0.379s
+sys	0m0.003s
+ 
+fastest1:
+
+real	0m0.089s
+user	0m0.086s
+sys	0m0.002s
+ 
+fastest2:
+
+real	0m0.069s
+user	0m0.068s
+sys	0m0.000s
+ 
+fastest3:
+
+real	0m0.048s
+user	0m0.045s
+sys	0m0.002s
