@@ -83,14 +83,14 @@ static int mygpio_init(void)
     /*
      * Request GPIO Ressources
      */
-    if(gpio_request(131, "gpio0_1") < 0)
+    if(gpio_request(137, "gpio0_7") < 0)
 		printk("Error requesting GPIO %i\n", 131);
     /*
      * Set GPIO Direction
      */
     /*** YOUR CODE HERE ****/
-	gpio_direction_input(7); // for one gpio
-	request_irq(gpio_to_irq(7), my_isr, IRQF_TRIGGER_RISING, "myIRQ", NULL);
+	gpio_direction_input(137); // for one gpio
+	request_irq(gpio_to_irq(137), my_isr, IRQF_TRIGGER_RISING, "myIRQ", NULL);
     return 0;
 }
 
@@ -98,7 +98,7 @@ static void mygpio_exit(void)
 {
      
     printk(KERN_NOTICE "Removing Mygpio Module\n");
-		free_irq(gpio_to_irq(7), NULL);
+		free_irq(gpio_to_irq(137), NULL);
     /*
      * Free GPIO Ressources 
      */

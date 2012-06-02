@@ -7,33 +7,52 @@
 #include <linux/device.h>
 #include <linux/module.h>
 #include <asm/uaccess.h>
+#include <linux/ctype.h>
 
 #define MYGPIO_MAJOR  64
 #define MYGPIO_MINOR   0
 #define MYGPIO_CHS     1
 #define MAXLEN       512
+#define DEVICENAME "my_GPIO"
 
 static struct cdev MyGpioDev;
 struct file_operations mygpio_Fops;
-static int devno;
 const unsigned int gpio_len = 1;
+
+static struct class *gpio_class;
+static dev_t devno;
+struct device *gpio_dev;
+
+static ssize_t gpio_value_show(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t gpio_value_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size);
+
+
+struct device_attribute gpio_attr = __ATTR(myValue, 0777, gpio_value_show, gpio_value_store);
 
 static int mygpio_init(void)
 {
   int err; 
+	int gpio_no = 138;
     
     printk(KERN_ALERT "Mygpio Module Inserted\n");
-
 
     /*
      * Allocate Major/Minor Numbers 
      */
     devno = MKDEV(MYGPIO_MAJOR, MYGPIO_MINOR);
-    if((err=register_chrdev_region(devno, gpio_len, "myGpio"))<0){
+    if((err=alloc_chrdev_region(&devno, 0, gpio_len, DEVICENAME))<0){
       printk(KERN_ALERT "Can't Register Major no: %i\n", MYGPIO_MAJOR);
       return err;
     }
 
+		/*
+		 * Create GPIO class
+		 */
+		gpio_class = class_create(THIS_MODULE, DEVICENAME);
+		if (IS_ERR(gpio_class))
+			printk("Bad class create\n");
+
+		gpio_dev = device_create(gpio_class, NULL, devno, &gpio_no, DEVICENAME);
     /*
      * Create cdev
      */       
@@ -43,6 +62,13 @@ static int mygpio_init(void)
         printk (KERN_ALERT "Error %d adding MyGpio device\n", err);
         return -1;
     }
+
+
+		err = device_create_file(gpio_dev, &gpio_attr);
+		if (err) {
+			printk (KERN_ALERT "Error %d creating file\n", err);
+			return err;
+		}
 
     /*
      * Request GPIO Ressources
@@ -63,6 +89,7 @@ static void mygpio_exit(void)
 {
     printk(KERN_NOTICE "Removing Mygpio Module\n");
 
+		device_remove_file(gpio_dev, &gpio_attr);
     gpio_free(138);
  
     /*
@@ -70,6 +97,9 @@ static void mygpio_exit(void)
      */
     unregister_chrdev_region(devno, gpio_len);
     cdev_del(&MyGpioDev);
+		device_destroy(gpio_class, devno);
+
+		class_destroy(gpio_class);
 }
 
 
@@ -83,6 +113,7 @@ int mygpio_open(struct inode *inode, struct file *filep)
     printk("Opening MyGpio Device [major], [minor]: %i, %i\n", major, minor);
 
     if (!try_module_get(mygpio_Fops.owner)) // Get Module
+
       return -ENODEV;
 
     return 0;
@@ -188,6 +219,29 @@ ssize_t mygpio_read(struct file *filep, char __user *buf,
     return len;    
 }
 
+static ssize_t gpio_value_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	int *pValue = dev_get_drvdata(dev);
+	printk(KERN_ALERT "Hello from show!\n");
+	printk(KERN_ALERT "This is the driver data: %d\n", *pValue);
+	return 0;
+}
+
+static ssize_t gpio_value_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+ int *num = dev_get_drvdata(dev);
+ ssize_t ret = -EINVAL;
+ char *after;
+ unsigned long value = simple_strtoul(buf, &after, 10);
+ size_t count = after - buf;
+
+ if (isspace(*after))
+   count++;
+
+ printk("using Store to set gpio #%i to %i\n", *num, (int)value);
+ gpio_set_value(*num, value);
+ return count;
+}
 
 struct file_operations mygpio_Fops = 
 {
