@@ -6,7 +6,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <linux/i2c-dev.h>
-#include </home/bjarke/sources/linux-3.2.6/include/linux/i2c.h>
+#include </usr/src/linux-headers-3.2.0-24-generic/include/linux/i2c.h>
 #include <sys/ioctl.h>
 
 #define MAP_SIZE 4096UL
@@ -14,9 +14,10 @@
 
 int main(void) 
 {
-	int fd;
-	int lm75_addr = 0x48;
+	int fd, i;
+	int lm75_addr = 0x48, lm75_slave_addr = 0x00;
 	void *lm75_base, *lm75_virt;
+	char buf[10];
 	
 	__s32 res;
 
@@ -30,12 +31,10 @@ int main(void)
 		printf("ioctl error\n");
 		exit(1);
 	}
-// DOES NOT WORK!! 
-// This function should be present in header: linux/i2c.h - it's not.
-// Calling read() works
-	res = i2c_smbus_read_word_data(fd, lm75_addr);
+	
+	read(fd, buf, 1);
 		  
-	printf("%X\n", res);
+	printf("%i %i\n", buf[5], buf[6]);
 
 	return 0;
 }
