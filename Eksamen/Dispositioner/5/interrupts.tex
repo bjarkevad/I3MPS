@@ -1,0 +1,92 @@
+\documentclass{paper}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+
+% \includegraphics[scale=1]{img.png}
+% \begin{lstlisting} 
+\title{5. Interrupts}
+\begin{document}
+\maketitle
+\begin{large}\textbf{Forklar de forskellige interrupt typer}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+	\item Hardware interrupts
+	\begin{itemize}
+		\item Internal interrupts genereret af interne enheder
+		\item f.eks. UART interrupt p\aa\ RX buffer fuld
+	\end{itemize}
+	\item Software interrupts
+	\begin{itemize}
+		\item Event driven software(e.g. GUI)
+		\item Exceptions genereret af CPU (MMU errors etc)
+	\end{itemize}
+	\item Level triggered - Interruptet er aktivt s\aa\ l\ae nge IRQ'en er aktiv
+	\begin{itemize}
+		\item ISR skal godkende IRQ kilden, for at lave IRQ linjen blive deaktiveret
+	\end{itemize}
+	\item Shared interrupts
+	\begin{itemize}
+		\item Flere enheder p\aa\ en enkel IRQ line
+		\item ISR st\aa\r for at bestemme kilden
+		\item Enheder/client har som regel sit eget IRQ register
+	\end{itemize}
+	\item Edge-triggered interrupts
+	\begin{itemize}
+		\item ISR bliver kun kaldet en gang
+		\item Afh\ae ngig af arkitektur, en IRQ bliver kun set hvis ISR routinen ikke k\o rer
+		\item God til korte IRQ der ikke beh\o ver ack
+	\end{itemize}
+\end{itemize}
+
+\begin{large}\textbf{Hvad er de typiske opgaver for en ISR}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+	\item Skal v\ae re hurtig
+	\item M\aa\ ikke sove
+	\item M\aa\ ikke allokere hukommelse
+	\item "Acknowledge" irq-pending bit p\aa\ enheden
+	\item V\ae kke enheden
+	\item Hente data fra enheden
+	\item V\ae kke sovende funktioner
+	\item Returnere IRQ-HANDLED eller IRQ-NONE
+\end{itemize}
+\begin{lstlisting}
+	irqreturn_t my_ISR(int irq, void *dev_id);
+\end{lstlisting}
+
+\begin{large}\textbf{Hvordan virker interrupt h\aa ndtering i Linux?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+	\item \textbf{For blocking IO:} Applikationen sp\o rger efter data p\aa\ devicet, og blockerer til data er tilg\ae ngelig(event)
+	\item I user space benyttes blokerende fil adgang
+	\item I kernel space bliver dette implementeret i driveren(read/write sover)
+	\item En sovende process tages ud af scheduleren's run-queue
+	\item \textbf{Interrupts er KUN tilg\ae ngelig i kernel space!}
+\end{itemize}
+
+\begin{itemize}
+	\item Top half - ISR
+	\item Bottom half - workqueue, tasklet
+\end{itemize}
+	
+\begin{large}\textbf{Hvilke funktioner skal vi benytte is en driver for at underst\o tte interrupts?}\end{large}\\
+\line(1,0){510}
+\textit{Request og free skal benyttes i open/close ikke init/exit!}
+\begin{lstlisting}
+	int request_irq(irqLine, ISR function, flags, devicename, device ID);
+	void free_irq(irqLine, device ID);
+	wait_event_interruptible(wait queue, flag);
+	wake_up_interruptible(wait queue);
+\end{lstlisting}
+\begin{itemize}
+	\item For at kunne finde hvilken IRQ line der skal requestes, kigges der i interrupt handler koden
+	\item \textit{arch/arm/omap2/irq.c}
+	\item gpio til irq metode
+\end{itemize}
+
+\begin{large}\textbf{Hvordan kan vi optimere vores ISR?}\end{large}\\
+\line(1,0){510}
+
+
+\end{document}
