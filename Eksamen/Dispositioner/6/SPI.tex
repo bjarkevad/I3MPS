@@ -1,0 +1,109 @@
+\documentclass{paper}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+
+% \includegraphics[scale=1]{img.png}
+% \begin{lstlisting} 
+\title{6. SPI}
+\begin{document}
+\maketitle
+%%%%%%%%
+\begin{large}\textbf{Hvordan virker SPI bussen?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+	\item Master/slave ops\ae tning
+	\item Masteren bestemmer n\aa r der m\aa\ sendes eller modtages
+	\item Som regel en master og en eller flere slaves
+	\item Hver slave har enten sin egen CS, eller er daisy chained
+	\item Flere mastere er mulige
+	\item Best\aa r af 2 data forbindelser, clock, CS, gnd
+	\begin{itemize}
+		\item MOSI, MISO
+		\item CS0-N
+		\item Clock fra master
+	\end{itemize}
+\end{itemize}
+
+\textbf{Overf\o rsel:}
+\begin{enumerate}
+	\item Masteren S\ae tter CS lav og clocken generes
+	\item Masteren sender data til devicen p\aa\ MOSI\\
+		Slave sender data data p\aa\ MISO
+	\item CS s\ae ttes h\o j\\
+\end{enumerate}
+%%%%%%%%%
+\begin{large}\textbf{Hvilke parametre skal man v\ae re opm\ae rksom p\aa\ n\aa r man skal konfigurere interfacet til et SPI device?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+	\item CPOL - 0 clock g\aa r fra h\o j til lav, 1 omvendt
+	\item CPHA - Bestemmer hvorn\aa r data skiftes/l\ae ses
+	\item CPOL/CPHA modes:
+	\begin{itemize}
+		\item 00 - Mode 0 (Original Microwire)
+		\item 01 - Mode 1
+		\item 10 - Mode 2
+		\item 11 - Mode 3
+	\end{itemize}
+	\item SPI host ops\ae ttes efter slave enheden\\	
+\end{itemize}
+%%%%%%%%%
+\begin{large}\textbf{Hvilke metoder skal implementeres i en device driver som benytter SPI?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+	\item Specielt for SPI delen er \textbf{probe/remove/shutdown/resume/suspend}
+	\item SPI- init, exit, read, write kan alle implementeres som en del af char driverens metoder\\
+\end{itemize}
+%%%%%%
+\begin{large}\textbf{Hvordan kan man implementere et device driver modul med SPI(Hvad skal i init / exit ...)?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+	\item \textbf{SPI board info struct}
+	\begin{itemize}
+		\item Modalias 
+		\item Bus nr.
+		\item Chip select
+		\item Max frekvens
+		\item controller data (Device config struct)
+		\item mode 
+	\end{itemize}
+	\item \textbf{SPI driver struct}
+	\begin{itemize}
+		\item name
+		\item bus
+		\item owner(THIS MODULE)
+		\item probe/remove methoder
+	\end{itemize}
+	\item \textbf{Device probe metode}
+	\begin{itemize}
+		\item Bits per word
+		\item spi setup
+	\end{itemize}
+	\item \textbf{SPI init}
+	\begin{itemize}
+		\item SPI device s\ae ttes op med SPI master og boardinfo struct
+		\item SPI driver registreres
+	\end{itemize}
+	\item \textbf{SPI exit}
+	\begin{itemize}
+		\item Unregister SPI device
+		\item Unregister SPI driver\\
+		\item (frigiv bus, dealloker, afregistrere)
+	\end{itemize}
+\end{itemize}
+%%%%%%%
+\begin{large}\textbf{Hvad er design processen for at implementere en SPI device driver?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+	\item Find ud af slave enhedens egenskaber, CS etc.
+	\item Ops\ae t alle parametrene i SPI delen af char driveren, i de korrekte SPI relaterede structs
+	\item Implementer probe, remove, init, exit for SPI delen
+	\item Implementer read/write metoder
+	\item Implementer character device delen
+\end{itemize}
+
+
+
+
+
+\end{document}

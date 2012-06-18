@@ -1,0 +1,100 @@
+\documentclass{paper}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+
+\title{4. Linux Character Drivers}
+\begin{document}
+\maketitle
+\begin{large}\textbf{Hvad er en character driver?}\end{large}
+
+\line(1,0){510}
+\begin{itemize}
+	\item Et kerne modul der h\aa ndterer skrivning og l\ae sning fra en character device
+	\begin{itemize}
+		\item En character device er et device der modtager data i en str\o m
+		\item F.eks. en seriel port, netv\ae rks kommunikation, SPI device
+		\item \textbf{Ikke} HDD!
+	\end{itemize}
+	\item Bliver tilg\aa et igennem en \textbf{device node}, som regel i /dev/
+	\\
+\end{itemize}
+
+\begin{large}\textbf{Forklar hvad major-/minor numre er og hvordan de allokeres}\end{large}
+
+\line(1,0){510}
+\begin{itemize}
+	\item Angiver hvilket kernemodul der skal benyttes
+	\begin{itemize}
+		\item En form for adressering af moduler fra nodes
+	\end{itemize}
+	\item En character driver har typisk kun et major nummer
+	\begin{itemize}
+		\item Minor numre benyttes s\aa\  til at tilg\aa  et "subdevice"
+		\begin{itemize}
+			\item F.eks. en ADC med flere kanaler kan have minor no. 0 - N-1, hvor N er antallet af kanaler
+		\end{itemize}
+	\end{itemize}
+	\item Allokeres ved indsaettelse af kernemodul, og dern\ae st enten statisk eller dynamisk:
+	\item Statisk:
+	\begin{itemize}
+		\item Et modul har et bestemt major no.
+		\item Ikke egnet til systemer hvor man ikke har styr p\aa\  hvilke moduler bliver indsat
+		\item Egnet til sm\aa\  embeddede systemer
+		\\
+	\end{itemize}
+\end{itemize}
+
+
+\begin{large}\textbf{Hvordan registrerer man et device og hvad sker der n\aa r man g\o r det?}\end{large}
+
+\line(1,0){510}
+\begin{itemize}
+	\item F\o rst skal kernemodulet inds\ae ttes
+	\item Dern\ae st skal der oprettes et device node\\
+		\begin{lstlisting}
+			mknod /dev/mychardev -c 62 0
+		\end{lstlisting}
+	\item Der laves et node i /dev/ med navnet mychardev, der angives det er en char device med major no. 62, og minor no. 0
+	\item Herefter kan device driveren tilg\aa s fra userspace applikationer som en fil
+	\\
+\end{itemize}
+
+
+\begin{large}\textbf{Forklar form\aa let med metoderne Open / Close / Read / Write}\end{large}
+
+\line(1,0){510}
+\begin{itemize}
+	\item Metoderne benyttes til at bestemme hvad der sker, n\aa r man benytter forskellige kaldt p\aa\ character devicets device node
+	\begin{itemize}
+		\item N\aa r noden \aa bnes, vil open metoden blive kaldt
+		\item N\aa r der skrives eller l\ae ses fra noden bliver read/write kaldt
+		\item N\aa r noden lukkes, vil close metoden blive kaldt
+	\end{itemize}
+	\item Disse metoder kaldes \textbf{Fil Operationer}, alts\aa\ de operationer der udf\o res n\aa r devicet benyttes som en fil
+	\begin{itemize}
+		\item Disse operationer skal erkl\ae res i \textbf{FOPS Structen}, s\aa ledes driveren ved hvad der skal kaldes, og hvorn\aa r\\
+	\end{itemize}
+\end{itemize}
+
+
+\begin{large}\textbf{Forklar hvordan data overf\o res mellem user- / kernel space}\end{large}
+
+\line(1,0){510}
+\begin{itemize}
+	\item 
+	\begin{lstlisting}
+	unsigned long copy_to_user(void __user *to, const void *from, unsigned long n); 
+	\end{lstlisting}
+	\begin{itemize}
+		\item Copies a block of data, with a specified size, to userspace
+		\item 'from' is the source address in kernelspace
+		\item 'to' is the destination address in userspace
+		\item 'n' is the size of the block in bytes
+		\item returns the amount of bytes that could \textbf{not} be copied. 0 on success
+	\end{itemize}
+	\item read og write metoder tager en char* ind som argument, som kan benytes til at kopiere til og fra userspace
+	\item Typisk i read metoden, vil der blive kopieret data til userspace
+	\item I write vil der typisk blive kopieret fra userspace
+\end{itemize}
+\end{document}
