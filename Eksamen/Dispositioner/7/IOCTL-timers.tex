@@ -1,0 +1,105 @@
+\documentclass{paper}
+\usepackage[margin=0.5in]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+
+% \includegraphics[scale=1]{img.png}
+% \begin{lstlisting} 
+\title{IOCTL + Kernel Timers}
+\begin{document}
+\maketitle
+\line(1,0){510}
+\begin{itemize}
+\item \textit{Hvad benytter man IOCTL kald til?}
+\item \textit{Hvordan implementeres IOCTL funktioner i en device driver og hvordan tilg\aa s disse fra user-space?}
+\item \textit{Hvordan benytter man timers / delays i kernen?}
+\item \textit{Hvilke fordele / ulemper har de forskellige delay / timer typer?\\}
+\end{itemize}
+\begin{large}\textbf{Hvad benytter man IOCTL kald til?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+\item Direkte systemkald
+\item Tilg\aa\ modul fra userspace
+\item Ops\ae tning af modul fra userspace
+\item IOCTL kald er globale i kernen
+\item `Input/Output control' \\
+\end{itemize}
+
+\begin{large}\textbf{Hvordan implementeres IOCTL funtioner i en device driver og hvordan tilg\aa s disse fra user-space?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+	\item F\o rst skal man finde et ledigt IOCTL nummer(Sl\aa es op i ioctl-number.txt)
+	\item Der oprettes en IOCTL metode
+\begin{lstlisting}
+	long my_ioctl(struct file *fp, unsigned int cmd, unsigned long arg)
+\end{lstlisting}
+	\item Metoden registreres i fops structen
+\begin{lstlisting}
+.unlocked_ioctl = my_ioctl
+\end{lstlisting}
+	\item IOCTL kommandoer oprettes, og kan defineres som macroer:
+\begin{lstlisting}
+	#define START _IO(MY_IOCTL_NO, 1)
+......
+\end{lstlisting}
+ \item IOCTL metoden implementeres til at kunne g\o re forskellige ting p\aa\ IOCTL kommandoerne
+ \begin{itemize}
+ \item Switch/case der kalder forskellige metoder, s\ae tter variabler osv.
+ \end{itemize}
+ \item IOCTL kald kan nu benyttes fra userspace:
+	\begin{itemize}
+		\item Userspace applikationen skal kende til IOCTL nummeret
+		\item En file descriptor \aa bnes til device node
+	\begin{lstlisting}
+		int ioctl(int d, int request, void *..);
+	\end{lstlisting}
+	\end{itemize}
+\end{itemize}
+
+\begin{large}\textbf{Hvordan benytter man timers / delays i kernen?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+\item Den relative tid kan f\aa s fra jiffies i Linux
+	\begin{itemize}
+	\item jiffies er en 64 bit v\ae rdi
+	\item Genstartes ved system start
+	\item 'flips' efter $2^{64}$
+	\end{itemize}
+\item \textbf{Busy waiting}
+	\begin{itemize}
+	\item En 'tom' while l\o kke
+	\end{itemize}
+\item \textbf{Wait interruptible, wait interruptible timeout}
+\item \textbf{Scheduler timeout}
+\item \textbf{Sleep}
+
+\item Kernel timere er baseret p\aa\ software interrupts
+\item Timer funktioner k\o res i interrupt context
+	\begin{itemize}
+	\item Ingen sleeps, allokering, osv..\\
+	\end{itemize}
+\end{itemize}
+
+
+\begin{large}\textbf{Hvilke fordele / ulemper har de forskellige delay / timer typer?}\end{large}\\
+\line(1,0){510}
+\begin{itemize}
+\item \textbf{Busy waiting:}
+	\begin{itemize}
+	\item Holder p\aa\ sin CPU tid, alts\aa\ processen bliver ikke flyttet ud af schedulerens wait-queue
+	\item Bruger mange CPU resourcer
+	\end{itemize}
+\item \textbf{Wait interruptible}
+	\begin{itemize}
+		\item V\aa nger n\aa r der er brug for den
+		\item Sleeping
+	\end{itemize}
+\item \textbf{Kernel Timers}
+	\begin{itemize}
+	\item Opf\o rer sig som et planlagt interrupt
+	\item Skal f\o lge samme regler som en ISR
+	\item Ikke i process kontekst
+	\end{itemize}
+\end{itemize}
+
+\end{document}
